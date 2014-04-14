@@ -19,8 +19,8 @@ public class WebGraph
 			p.initLinks();
 			allPages.add(p);
 		}
-		referrer.links.add(p);
-		p.links.add(referrer);
+		referrer.links.add(p); //need to fix accroding to new logic (you don't necessarly put a link on both just on one.)
+		p.links.add(referrer);//need to fix accroding to new logic (you don't necessarly put a link on both just on one.)
 	}
 	
 	

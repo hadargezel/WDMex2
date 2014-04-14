@@ -3,7 +3,7 @@ import java.util.TreeSet;
 
 public class Page{
 	String URL;
-	TreeSet<Page> links;
+	TreeSet<String> links;
 	
 	
 	public Page(String URL) {
@@ -13,7 +13,7 @@ public class Page{
 	
 	public void initLinks()
 	{
-		this.links = new TreeSet<Page>(new pageComperator());
+		this.links = new TreeSet<String>();
 	}
 	
 	
