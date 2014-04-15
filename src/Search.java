@@ -34,31 +34,38 @@ public class Search
 	{
 		int counter = 0;
 		String nextCrawlURL = this.startingURL;
-		alreadyInQueue.add(nextCrawlURL);
+		this.crawlingQueue.add(nextCrawlURL);
 		
-		while (nextCrawlURL != null && counter <= crawlPagesLimit )
+		while ((nextCrawlURL = crawlingQueue.poll()) != null && counter <= crawlPagesLimit )
 		{
-			String content = fetchPage(nextCrawlURL);
-			
-			if (!content.isEmpty())
+			System.out.println(nextCrawlURL);
+			if (!alreadyInQueue.contains(nextCrawlURL))
 			{
-				Page p = new Page(nextCrawlURL);
-				addLinksToQueueAndToPage(content, p);
-				// 18.004
-				//this.linksGraph.allPages.add(p);
-				this.linksGraph.addNewPage(p);
-				/* 
-				 * words shit patrsing
-				 */
+				String content = fetchPage(nextCrawlURL);
+				
+				if (!content.isEmpty())
+				{
+					Page p = new Page(nextCrawlURL);
+					this.linksGraph.addNewPage(p);
+					addLinksToQueueAndToPage(content, p);
+					// 18.004
+					//this.linksGraph.allPages.add(p);
+					
+					PageWordsParser parser = new PageWordsParser(nextCrawlURL, content);
+					parser.extractWords();
+					parser.calculateScores();
+					parser.addWordsAndScoresToInvertedIndex(this.words);
+				}
+				this.alreadyInQueue.add(nextCrawlURL);
+				counter++;
 			}
-			
-			counter++;
-			nextCrawlURL = crawlingQueue.poll();
 		}
 	}
 	public static void main(String[] args)
 	{
 		Search s = new Search("http://simple.wikipedia.org/wiki/Albert_einstein");
+		s.crawl(100);
+		System.out.println("blalalaal");
 	}
 
 
@@ -75,7 +82,7 @@ public class Search
 			if (!alreadyInQueue.contains(url))
 			{
 				this.crawlingQueue.add(url);
-				this.alreadyInQueue.add(url);
+				//this.alreadyInQueue.add(url);
 			}
 		}
 	}
