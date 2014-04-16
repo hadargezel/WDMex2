@@ -64,7 +64,8 @@ public class Search
 	public static void main(String[] args)
 	{
 		Search s = new Search("http://simple.wikipedia.org/wiki/Albert_einstein");
-		s.crawl(100);
+		s.crawl(20);
+		//s.linksGraph.allPages
 		System.out.println("blalalaal");
 	}
 

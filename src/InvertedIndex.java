@@ -1,18 +1,18 @@
-import java.util.TreeSet;
+import java.util.TreeMap;
 
 
 public class InvertedIndex 
 {
-	TreeSet<Word> words;
+	TreeMap<String, Word> words;
 	
 	public InvertedIndex()
 	{
-		this.words = new TreeSet<Word>(new WordComparator());
+		this.words = new TreeMap<String, Word>();
 	}
 	
 	public void addWord(Word word)
 	{
 		word.initPageUrlToScore();
-		this.words.add(word);
+		this.words.put(word.word, word);
 	}
 }

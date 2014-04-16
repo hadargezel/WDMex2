@@ -1,10 +1,11 @@
 import java.util.HashMap;
+import java.util.TreeMap;
 
 
 public class Word
 {
 	String word;
-	HashMap<String, Double> pageUrlToScore;
+	TreeMap<String, Double> pageUrlToScore;
 	
 	public Word(String word) 
 	{
@@ -14,6 +15,6 @@ public class Word
 	
 	public void initPageUrlToScore()
 	{
-		this.pageUrlToScore = new HashMap<String,Double>();
+		this.pageUrlToScore = new TreeMap<String,Double>();
 	}
 }

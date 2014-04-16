@@ -59,13 +59,13 @@ public class PageWordsParser
 		for (String word : this.uniqueWords)
 		{
 			Word w = new Word(word);
-			if (!wordsDS.words.contains(w))
+			if (!wordsDS.words.containsKey(word))
 			{
 				wordsDS.addWord(w);
 			}
 			else
 			{
-				w = wordsDS.words.
+				w = wordsDS.words.get(word);
 			}
 			int wordIndex = this.uniqueWords.indexOf(word);
 			w.pageUrlToScore.put(this.URL, this.scores[wordIndex]); 

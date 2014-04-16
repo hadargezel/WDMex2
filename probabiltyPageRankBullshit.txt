@@ -1,0 +1,33 @@
+Z=PR(w1) = (1-D)[prW2*degW2 +...+prWn*degWn]+D*1/n
+
+PR(w2) = (1-d)[prW1*deg1+prW3*deg3.....+]+D*1/n
+
+PR(w2)=(1-d)[Z*deg1 +prW3deg3....+]+D*1/n
+
+PR(w2)=(1-d)[   (1-d)[prW2deg2+prW3deg3...]   *degW1 + prW3deg3+....]
+
+PR(W2) -(1-d)^2*[pr(W2)*deg2] = (1-d)
+====
+Z=PR(w1) = (1-D)[prW2*degW2 +...+prWn*degWn]+D*1/n
+
+Z/(1-d) = [prW2Deg2+....] + d*(1/2) / (1-d)
+z/[(1-d)*Deg2] = [prW2 + .../(Deg2)+...prWn/(Deg2)]     + d*(1/2) / (1-d)*deg2
+
+z/[(1-d)*Deg2] - [prW3Deg3/DEG2+ .../(Deg2)+...prWn/(Deg2)]  - d*(1/2) / (1-d)*deg2 = PrW2
+
+
+======
+pr_vector(i+1=4 steps) = A*pr_vector(i=3 steps)
+
+pr_vector(i) = (prob. be in W1, prob. be in W2....,prob. be in Wn)
+
+pr_vector(k) - wnat to find, that :
+
+labda=1
+A*(self_vector) = 1*self_vector
+
+v'=111 11111111111    av = a a^2 a^3
+
+v= 1/200    200v    =v'   
+
+

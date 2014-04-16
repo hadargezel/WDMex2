@@ -6,7 +6,8 @@ public class Page{
 	TreeSet<String> links;
 	
 	
-	public Page(String URL) {
+	public Page(String URL)
+	{
 		this.URL = URL;
 		this.links = null;
 	}
