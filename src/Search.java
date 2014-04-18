@@ -43,8 +43,10 @@ public class Search
 			if (!content.isEmpty())
 			{
 				Page p = new Page(nextCrawlURL);
-				addLinksToQueueAndPage(content, p);
-				this.linksGraph.allPages.add(p);
+				addLinksToQueueAndToPage(content, p);
+				// 18.004
+				//this.linksGraph.allPages.add(p);
+				this.linksGraph.addNewPage(p);
 				/* 
 				 * words shit patrsing
 				 */
@@ -60,7 +62,7 @@ public class Search
 	}
 
 
-	public void addLinksToQueueAndPage(String content, Page p)
+	public void addLinksToQueueAndToPage(String content, Page p)
 	{
 		String pattern = "(href=\"(\\/wiki\\/.*?)\")";
 		Pattern pat = Pattern.compile(pattern);

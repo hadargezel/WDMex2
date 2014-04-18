@@ -1,7 +1,8 @@
 import java.util.HashMap;
 
 
-public class Word {
+public class Word
+{
 	String word;
 	HashMap<Integer, Double> pageIdToScore;
 }
