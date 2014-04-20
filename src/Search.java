@@ -37,35 +37,37 @@ public class Search
 	}
 
 
-	public TreeMap<String, String> TA(ArrayList<LinkedHashMap<String, Double>> rankMaps, int k)
+	public LinkedHashMap<String, Double> TA(ArrayList<LinkedHashMap<String, Double>> rankMaps, int k)
 	{
-		/*
-		// can implement comparator inside the class (?) we did it in soft1...(?)
-		class IdDataStruct implements Comparator<IdDataStruct>
-		{
-			private Double scoreAfterAggregation;
-			private boolean inTopK;
-
-			public int compare(IdDataStruct id1, IdDataStruct id2) 
-			{
-				return id1.scoreAfterAggregation.compareTo(id2.scoreAfterAggregation);
-			}
-		}
-		 */
-
 		ArrayList<Iterator<Entry<String, Double>>> rankMapIteratorArr = new ArrayList<Iterator<Entry<String, Double>>>(rankMaps.size());
 		for (LinkedHashMap<String, Double> rankMap : rankMaps)
 			rankMapIteratorArr.add(rankMap.entrySet().iterator());
 
 		HashMap<Integer, Entry<String, Double>> minPerListInSortedAccess = new HashMap<Integer, Entry<String, Double>>(rankMaps.size());
-
-		double threshold = Double.POSITIVE_INFINITY;
-
+		
+		double[] maxRankPerList = new double[rankMaps.size()];
+		
+		// init threshold 20:00
+		double threshold = 0.0;
+			for (int i = 0; i < rankMaps.size(); i++)
+			{
+				LinkedHashMap<String, Double> rankMap = rankMaps.get(i);
+				
+				double maxRankInList = 0.0;
+				if (rankMap.size() > 0)
+				{
+					maxRankInList = rankMap.get(rankMap.keySet().iterator().next());
+					maxRankPerList[i] = maxRankInList;
+				}
+				threshold += maxRankInList;
+			}
 		TreeMap<String, String> topK = new TreeMap<String, String>(new LetMeHaveDuplicateDoubleKeysComparator());
 		HashMap<Double, Integer> currInstanceOfTotalRank = new HashMap<Double, Integer>();
 
 		// Double[2] : [0] => score, [1] => is in topK
 		HashMap<String, Boolean> seenIdsDecisions = new HashMap<String, Boolean>();
+
+		boolean[] isRankListEnded = new boolean[rankMaps.size()];
 
 		while ((topK.size() < k) || (Double.valueOf(topK.firstKey().split("#")[0]) < threshold))
 		{
@@ -90,7 +92,7 @@ public class Search
 						seenIdsDecisions.put(nextItemWithLowerScore.getKey(), false);
 
 						// calculate total rank
-						double total = 0;
+						double total = calculateTotalRank(rankMaps, nextItemWithLowerScore.getKey());
 						// add to topK if there aren't K items yet OR if its score is better than the lowest score
 
 						boolean lessthanK = (topK.size() < k);
@@ -111,140 +113,186 @@ public class Search
 							// mark that it's taken
 							seenIdsDecisions.put(nextItemWithLowerScore.getKey(), true);
 
-							// update threshold
-							threshold = updateThreshold(threshold, rankMaps.size(), i, currMinItem.getValue(), nextItemWithLowerScore.getValue());
+							// update threshold if not first id from list HASHUD LOGIC
+							if (currMinItem != null)
+								threshold = updateThreshold(threshold, rankMaps.size(), i, currMinItem.getValue(), nextItemWithLowerScore.getValue());
 						}
 					}
 
 				}
-
-				/* we've reached the end of the rank list     threshold ? and what else */
+				/* we've reached the end of the rank list threshold, so this list can contribute to the total rank only 0 from now on */
 				else
 				{
-
+					// first time iterator is empty. update potential threshold - this rank list can contribute only 0 to total
+					if (!isRankListEnded[i])
+					{
+						double oldScoreContributedToThreshold = 0.0;
+						if (currMinItem != null)
+							oldScoreContributedToThreshold = currMinItem.getValue();
+						
+						threshold = updateThreshold(threshold, rankMaps.size(), i, oldScoreContributedToThreshold, 0.0);
+						isRankListEnded[i] = true;
+					}
 				}
-
-
 			}
-			/* there's some item that is the "lowest" in its rank list and it haven't been taken to the topK */
-			/*else
-				{
-
-				}*/
+		}
+		// when we iterate over it is it insertion order or natural sort?
+		LinkedHashMap<String, Double> idWithScoreOrderbyScore = new LinkedHashMap<String, Double>();
 		
-		}
-		return topK;
-}
+		for (Entry<String, String> scoreWithId : topK.descendingMap().entrySet())
+			idWithScoreOrderbyScore.put(scoreWithId.getValue(), Double.valueOf(scoreWithId.getKey().split("#")[0]));
+		
+		return idWithScoreOrderbyScore;
+	}
 
-// aggregation func: [pagerank + avg(each word rank)] / 2 
-public double updateThreshold(double threshold, int numOfRankMaps, int rankListIndexThatChanged, double oldVal, double newVal)
-{
-	// speciefic
-	if (rankListIndexThatChanged == 0) //pagerank!
-		return (threshold - oldVal/2 + newVal/2);
-	else
-		return (threshold - oldVal/(2*(numOfRankMaps-1)) + newVal/(2*(numOfRankMaps-1)));
-}
-
-public void crawl(int crawlPagesLimit)
-{
-	int counter = 0;
-	String nextCrawlURL = this.startingURL;
-	this.crawlingQueue.add(nextCrawlURL);
-
-	while ((nextCrawlURL = crawlingQueue.poll()) != null && counter <= crawlPagesLimit )
+	// speceifeic to data ranks etc.
+	// aggregation func: [pagerank + avg(each word rank)] / 2 
+	private double calculateTotalRank(ArrayList<LinkedHashMap<String, Double>> rankMaps, String id) 
 	{
-		System.out.println(nextCrawlURL);
-		if (!alreadyInQueue.contains(nextCrawlURL))
+		double totalWordsRank = 0.0;
+		double pageRank = 0.0;
+		double numOfRanks = rankMaps.size();
+		
+		for (int i = 0; i < rankMaps.size(); i++)
 		{
-			String content = fetchPage(nextCrawlURL);
+			Double rankOfId = rankMaps.get(i).get(id);
+			
+			if (i == 0)
+				pageRank = rankOfId;
+			else if (rankOfId != null)
+				totalWordsRank += rankOfId;
+		}
+		
+		return ( ((totalWordsRank / (numOfRanks-1.0)) + pageRank) / 2.0 );
+	}
 
-			if (!content.isEmpty())
+
+
+	// aggregation func: [pagerank + avg(each word rank)] / 2 
+	public double updateThreshold(double threshold, double numOfRankMaps, int rankListIndexThatChanged, double oldVal, double newVal)
+	{
+		// speciefic
+		if (rankListIndexThatChanged == 0) //pagerank!
+			return (threshold - oldVal/2.0 + newVal/2.0);
+		else
+			return (threshold - oldVal/(2.0*(numOfRankMaps-1.0)) + newVal/(2.0*(numOfRankMaps-1.0)));
+	}
+
+	public void crawl(int crawlPagesLimit)
+	{
+		int counter = 0;
+		String nextCrawlURL = this.startingURL;
+		this.crawlingQueue.add(nextCrawlURL);
+
+		while ((nextCrawlURL = crawlingQueue.poll()) != null && counter <= crawlPagesLimit )
+		{
+			System.out.println(nextCrawlURL);
+			if (!alreadyInQueue.contains(nextCrawlURL))
 			{
-				Page p = new Page(nextCrawlURL);
-				this.linksGraph.addNewPage(p);
-				addLinksToQueueAndToPage(content, p);
-				// 18.004
-				//this.linksGraph.allPages.add(p);
+				String content = fetchPage(nextCrawlURL);
 
-				PageWordsParser parser = new PageWordsParser(nextCrawlURL, content);
-				parser.extractWords();
-				parser.calculateScores();
-				parser.addWordsAndScoresToInvertedIndex(this.words);
+				if (!content.isEmpty())
+				{
+					Page p = new Page(nextCrawlURL);
+					this.linksGraph.addNewPage(p);
+					addLinksToQueueAndToPage(content, p);
+					// 18.004
+					//this.linksGraph.allPages.add(p);
+
+					PageWordsParser parser = new PageWordsParser(nextCrawlURL, content);
+					parser.extractWords();
+					parser.calculateScores();
+					parser.addWordsAndScoresToInvertedIndex(this.words);
+				}
+				this.alreadyInQueue.add(nextCrawlURL);
+				counter++;
 			}
-			this.alreadyInQueue.add(nextCrawlURL);
-			counter++;
 		}
 	}
-}
 
-public void addLinksToQueueAndToPage(String content, Page p)
-{
-	String pattern = "(href=\"(\\/wiki\\/.*?)\")";
-	Pattern pat = Pattern.compile(pattern);
-	Matcher m = pat.matcher(content);
-
-	while (m.find())
+	public void addLinksToQueueAndToPage(String content, Page p)
 	{
-		String url = "http://simple.wikipedia.org/" + m.group(2);
-		if (url != null)
+		String pattern = "(href=\"(\\/wiki\\/.*?)\")";
+		Pattern pat = Pattern.compile(pattern);
+		Matcher m = pat.matcher(content);
+
+		int count = 0;
+		while (m.find())
 		{
-			p.links.add(url);
-			if (!alreadyInQueue.contains(url))
+			String url = "http://simple.wikipedia.org" + m.group(2);
+			if (url != null)
 			{
-				this.crawlingQueue.add(url);
-				//this.alreadyInQueue.add(url);
+				p.links.add(url);
+				if (!alreadyInQueue.contains(url))
+				{
+					count++;
+					this.crawlingQueue.add(url);
+					//this.alreadyInQueue.add(url);
+				}
 			}
 		}
+		System.out.println(count);
 	}
-}
 
-public String fetchPage(String urlAddress)
-{
-	URL url;
-	InputStream inputStream = null;
-	BufferedReader bufferedReader;
-	String content="";
-	String line;
-	try {
-		url = new URL(urlAddress);
-		inputStream = url.openStream();  // throws an IOException
-		bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-		while ((line = bufferedReader.readLine()) != null) {
-			content+=line;
+	public String fetchPage(String urlAddress)
+	{
+		URL url;
+		InputStream inputStream = null;
+		BufferedReader bufferedReader;
+		String content="";
+		String line;
+		try {
+			url = new URL(urlAddress);
+			inputStream = url.openStream();  // throws an IOException
+			bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+			while ((line = bufferedReader.readLine()) != null) {
+				content+=line;
+			}
 		}
-	}
-	catch (MalformedURLException mue) 
-	{
-		mue.printStackTrace();
-	}
-	catch (IOException ioe) 
-	{
-		ioe.printStackTrace();
-	} 
-	finally 
-	{
-		try 
+		catch (MalformedURLException mue) 
 		{
-			if (inputStream != null) inputStream.close();
+			mue.printStackTrace();
 		}
 		catch (IOException ioe) 
 		{
 			ioe.printStackTrace();
+		} 
+		finally 
+		{
+			try 
+			{
+				if (inputStream != null) inputStream.close();
+			}
+			catch (IOException ioe) 
+			{
+				ioe.printStackTrace();
+			}
+
 		}
-
+		return content;
 	}
-	return content;
-}
 
-public static void main(String[] args)
-{
-	Search s = new Search("http://simple.wikipedia.org/wiki/Albert_einstein");
-	s.crawl(20);
-	//s.linksGraph.allPages
-	PageRank pr = new PageRank(s.linksGraph, 1);
-	pr.findPR();
-	System.out.println("blalalaal");
-}
+	public static void main(String[] args)
+	{
+		Search s = new Search("http://simple.wikipedia.org/wiki/Albert_einstein");
+		s.crawl(20);
+		PageRank pr = new PageRank(s.linksGraph, 0.00005);
+		pr.findPR();
+		
+		String[] queryWords = {"Einstein", "physics"};
+		
+		ArrayList<LinkedHashMap<String, Double>> rankMaps = new ArrayList<LinkedHashMap<String, Double>>(queryWords.length);
+		rankMaps.add(pr.getUrlsWithRanksOrderbyRank());
+		
+		for (String word : queryWords)
+		{
+			Word wordInDB = s.words.words.get(word);
+			LinkedHashMap<String, Double> rankListOfWord = (wordInDB != null) ? wordInDB.getPageToScoreMapOrderbyScore() : InvertedIndex.getEmptyPageToScoreMap();
+			rankMaps.add(rankListOfWord);
+		}
+		
+		LinkedHashMap<String, Double> topUrlsWithScores = s.TA(rankMaps, 5);
+		System.out.println("blalalaal");
+	}
 
 }

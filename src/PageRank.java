@@ -21,7 +21,7 @@ public class PageRank
 		this.initA();
 		
 		this.v = new double[linksGraph.allPages.size()];
-		Arrays.fill(this.v, 1.0);
+		Arrays.fill(this.v, ((double)1)/((double)linksGraph.allPages.size()) );
 	}
 	
 	private void initMappings()
@@ -47,18 +47,25 @@ public class PageRank
 		//walk on webgraph, fill A
 		for (Page p : this.linksGraph.allPages)
 		{
-			double eachLinkProb = 1 / (p.links.size());
 			
+			// fill column of p as a boolean + count number of crawled links from total links
+			int countCrawledLinks = 0;
 			for (String link : p.links)
 			{
 				Page temp = new Page(link);
 				if (this.linksGraph.allPages.contains(temp))
 				{
-					this.A[this.urlToMatrixIndex.get(link)][this.urlToMatrixIndex.get(p.URL)] = eachLinkProb;
+					System.out.println("aa");
+					countCrawledLinks++;
+					this.A[this.urlToMatrixIndex.get(link)][this.urlToMatrixIndex.get(p.URL)] = 1;
 				}
-				
 			}
-				
+			
+			double eachLinkProb = (countCrawledLinks != 0) ? (double) 1 / (double)countCrawledLinks : 0;
+			System.out.println(eachLinkProb);
+			for (int i = 0; i < this.linksGraph.allPages.size(); i++)
+				if (this.A[i][this.urlToMatrixIndex.get(p.URL)] == 1)
+					this.A[i][this.urlToMatrixIndex.get(p.URL)] = eachLinkProb;
 		}
 	}
 	
@@ -67,12 +74,12 @@ public class PageRank
 		double[] oldV = this.v.clone();//check about deep clone
 		
 		// V[i]
-		for (int i = 0; i < v.length; i++)
+		for (int i = 0; i < this.v.length; i++)
 		{
 			double sum = 0;
 			
 			for (int j = 0; j < this.v.length; j++)
-				sum += this.A[i][j]*this.v[j];
+				sum += this.A[i][j]*oldV[j];
 			this.v[i] = sum;
 		}
 		// calculate distance(PAAR) if it will be smaller than epsilon we'll stop in the calling func that using this func
@@ -84,7 +91,7 @@ public class PageRank
 		if (v1.length != v2.length)
 			return -1;
 		
-		int sumOfPows = 0;
+		double sumOfPows = 0;
 		
 		for (int i = 0; i < v1.length; i++)
 			sumOfPows += (v1[i]-v2[i])*(v1[i]-v2[i]);
@@ -98,6 +105,11 @@ public class PageRank
 		
 		while (distance >= this.epsilon)
 		{
+			System.out.println(Arrays.toString(this.v));
+			double sum = 0;
+			for (double d : this.v)
+				sum += d;
+			System.out.println(sum);
 			distance = calculateRoundAv();
 		}
 	}
