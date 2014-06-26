@@ -36,12 +36,11 @@ public class Word
 			
 			String keyWithInstanceCounting = String.valueOf(rank) + '#' + String.valueOf(currInstanceOfRank.get(rank));
 			ScoreToPageOrderbyScore.put(keyWithInstanceCounting, pageWithScore.getKey());
-			
-			// create hash map from ScoreToPage that already ordered by Score
-
-			for (Entry<String, String> ScoreToPage : ScoreToPageOrderbyScore.descendingMap().entrySet())
-				pageToScoreMapOrderbyScore.put(ScoreToPage.getValue(), Double.valueOf(ScoreToPage.getKey().split("#")[0]));
 		}
+		// create hash map from ScoreToPage that already ordered by Score	
+		for (Entry<String, String> ScoreToPage : ScoreToPageOrderbyScore.descendingMap().entrySet())
+			pageToScoreMapOrderbyScore.put(ScoreToPage.getValue(), Double.valueOf(ScoreToPage.getKey().split("#")[0]));
+		
 		return pageToScoreMapOrderbyScore;
 	}
 	

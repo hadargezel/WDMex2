@@ -26,9 +26,9 @@ public class PageWordsParser
 
 		for (String word : this.allWords)
 		{
-			if (!word.isEmpty()) // do we really need this? aka if we split "     " with " " we get empty strings or nothing?
+			if (!word.isEmpty())
 			{
-				uniqueWordsSet.add(word);
+				uniqueWordsSet.add(word.toLowerCase());
 			}
 		}
 
